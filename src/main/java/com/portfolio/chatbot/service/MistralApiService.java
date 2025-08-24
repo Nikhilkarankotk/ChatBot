@@ -29,4 +29,8 @@ public class MistralApiService {
                 .bodyToMono(JsonNode.class)
                 .map(response -> response.get("choices").get(0).get("message").get("content").asText());
     }
+
+    public String generateResponse(String augmentedPrompt) {
+        return chatCompletion(augmentedPrompt).block();
+    }
 }
