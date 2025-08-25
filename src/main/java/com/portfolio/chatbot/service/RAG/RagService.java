@@ -10,6 +10,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -25,20 +26,32 @@ public class RagService {
 
     @Transactional
     public void ingestDocument(MultipartFile file) throws IOException, TikaException {
+        chunkRepo.deleteAll(); // clear existing chunks
         String text = documentParser.parseDocument(file);
         List<String> chunks = textChunker.chunkText(text, 500);
         for (String chunk : chunks) {
-//            float[] embedding = embeddingService.generateEmbedding(chunk).block();
+            float[] embedding = embeddingService.generateEmbedding(chunk).block();
+            if(embedding == null || embedding.length == 0){
+                throw new IllegalStateException("Failed to generate embedding for chunk: " + chunk);
+            }
             DocumentChunk docChunk = new DocumentChunk();
             docChunk.setText(chunk);
 //            docChunk.setEmbedding(embedding);
+            List<Float> embeddingList = new ArrayList<>();
+            for (float f : embedding) {
+                embeddingList.add(f);
+            }
+            docChunk.setEmbedding(embeddingList);
+            System.out.println("Chunk: " + chunk);
+            System.out.println("Embedding: " + Arrays.toString(embedding));
             chunkRepo.save(docChunk);
         }
     }
     public String query(String userQuery) {
         float[] queryEmbedding = embeddingService.generateEmbedding(userQuery).block();
+        System.out.println("Query Embedding: " + Arrays.toString(queryEmbedding));
         List<DocumentChunk> relevantChunks = chunkRepo.findSimilarChunks(Arrays.toString(queryEmbedding));
-        
+        System.out.println("Retrieved Chunks: " + relevantChunks);
         String context = relevantChunks.stream()
                 .map(DocumentChunk::getText)
                 .collect(Collectors.joining("\n"));

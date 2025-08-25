@@ -17,5 +17,8 @@ public class DocumentChunk {
 //    @Convert(converter = FloatArrayConverter.class)
 //    @Column(columnDefinition = "vector(1536)")
 //    private float[] embedding; // Store embeddings as float[]
-//}
+    @ElementCollection
+    @CollectionTable(name = "document_chunk_embeddings", joinColumns = @JoinColumn(name = "chunk_id"))
+    @Column(name = "embedding_value")
+    private List<Float> embedding;
 }

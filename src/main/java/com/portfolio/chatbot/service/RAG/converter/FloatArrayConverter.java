@@ -10,6 +10,7 @@ import java.util.stream.Collector;
 public class FloatArrayConverter implements AttributeConverter<float[], String> {
     @Override
     public String convertToDatabaseColumn(float[] attribute) {
+        if (attribute == null || attribute.length == 0) return null;
         return Arrays.toString(attribute);
     }
     @Override
@@ -19,6 +20,7 @@ public class FloatArrayConverter implements AttributeConverter<float[], String> 
 //                .mapToFloat(Float::parseFloat)
 //                .toArray();
 //        }
+        if(dbData == null || dbData.isEmpty()) return new float[0];
         return Arrays.stream(dbData.substring(1, dbData.length() - 1).split(",")).map(String::trim)
                 .map(Float::parseFloat)
                 .collect(
